@@ -30,6 +30,7 @@ class BridgeService : Service() {
         getSystemService(NotificationManager::class.java).createNotificationChannel(
             NotificationChannel(CHANNEL, "SMS Bridge", NotificationManager.IMPORTANCE_LOW)
         )
+        Capture.init(this)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -52,7 +53,7 @@ class BridgeService : Service() {
 
         if (http == null) {
             try {
-                http = HttpServer(port, { Prefs.secret(this) }, InboxSource(contentResolver))
+                http = HttpServer(port, { Prefs.secret(this) }, MergedSource(InboxSource(contentResolver)))
                     .also { it.start() }
                 running = true
                 lastError = null
@@ -69,6 +70,7 @@ class BridgeService : Service() {
         running = false
         http?.stop()
         http = null
+        Capture.clear() // 关开关即清掉广播缓存
         super.onDestroy()
     }
 

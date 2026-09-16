@@ -47,6 +47,7 @@ class MainActivity : Activity() {
         tvSecret = findViewById(R.id.tvSecret)
         tvAddr = findViewById(R.id.tvAddr)
         tvTest = findViewById(R.id.tvTest)
+        Capture.init(this)
         findViewById<TextView>(R.id.tvVersion).text =
             "v${Doc.VERSION} · MIT · 源码 github.com/SurvivorNo1/sms-bridge"
 
@@ -103,7 +104,7 @@ class MainActivity : Activity() {
         val err = BridgeService.lastError
         tvHint.text = when {
             err != null -> "⚠ $err"
-            !hasSmsPermission() -> "⚠ 未授予「读取短信」权限，打开开关前请先允许。"
+            !hasSmsPermission() -> "⚠ 未授予「读取 / 接收短信」权限，打开开关前请先允许。"
             else -> "开着时通知栏常驻；只对同一 WiFi / 热点内、持有密钥的设备开放。"
         }
         tvHint.setTextColor(getColor(if (err != null || !hasSmsPermission()) R.color.warn else R.color.text2))
@@ -136,11 +137,12 @@ class MainActivity : Activity() {
     }
 
     private fun hasSmsPermission() =
-        checkSelfPermission(Manifest.permission.READ_SMS) == PackageManager.PERMISSION_GRANTED
+        checkSelfPermission(Manifest.permission.READ_SMS) == PackageManager.PERMISSION_GRANTED &&
+            checkSelfPermission(Manifest.permission.RECEIVE_SMS) == PackageManager.PERMISSION_GRANTED
 
     private fun requestPerms() {
         val need = ArrayList<String>()
-        if (!hasSmsPermission()) need.add(Manifest.permission.READ_SMS)
+        if (!hasSmsPermission()) { need.add(Manifest.permission.READ_SMS); need.add(Manifest.permission.RECEIVE_SMS) }
         if (Build.VERSION.SDK_INT >= 33 &&
             checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
         ) need.add(Manifest.permission.POST_NOTIFICATIONS)

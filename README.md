@@ -8,11 +8,13 @@
 
 把手机变成一个**只能在 WiFi 局域网内、带密钥才能访问**的本机短信查询服务。
 
-> ⚠️ **危险操作提醒**：小米 / 华为 / OPPO 等国产 ROM 有「验证码保护」功能，开着时验证码类短信对所有第三方 app 隐藏，
-> 本工具也读不到。要用它取验证码，就得**先在系统设置里关闭「验证码保护」**——这会让手机上任何有短信权限的 app
-> 都能读到你的验证码，是降低安全性的操作。**用完请立刻重新打开**，不要长期关着。
+> ⚠️ **关于 ROM 的「验证码保护」**：小米 / 华为 / OPPO 等国产 ROM 开着这个功能时，验证码类短信对所有第三方 app 的
+> **数据库读取**隐藏。v0.3 起本工具走**双通道**：收件箱查询 + `SMS_RECEIVED` 广播接收，广播通常不受该功能过滤，
+> 所以**优先不要关「验证码保护」**，先开着试。只有你这台 ROM 连广播也拦时才需要关——那是降低整机安全性的操作
+> （任何有短信权限的 app 都能读验证码），**用完请立刻重新打开**。
 
-- 手机上一个开关：开 = 前台服务常驻监听端口；关 = 端口关闭
+- 手机上一个开关：开 = 前台服务常驻监听端口 + 收集短信广播；关 = 端口关闭 + 清空广播缓存
+- 短信两路合并去重：系统收件箱 ∪ 开关打开期间收到的广播（后者缓存 24 小时 / 200 条，存 app 私有目录）
 - 电脑主动发起查询，两个接口：**时间范围** / **关键词（可正则）**
 - 每个请求 HMAC-SHA256 签名 + 5 分钟时间窗；响应 AES-256-GCM 加密
 - 只接受来自 `wlan*` / `ap*` / `swlan*` 网卡、且对端为私网地址的连接，其他一律 403
@@ -43,7 +45,7 @@ X-Sign:      hex( HMAC-SHA256( key=SECRET, msg="<ts>\nGET\n<path?query>" ) )
 
 ## 权限
 
-`READ_SMS`（读本机收件箱）、`INTERNET`（开本地端口）、`FOREGROUND_SERVICE` + `FOREGROUND_SERVICE_DATA_SYNC`（常驻）、`POST_NOTIFICATIONS`。
+`READ_SMS`（读本机收件箱）、`RECEIVE_SMS`（收短信广播，绕过验证码保护对数据库读取的过滤）、`INTERNET`（开本地端口）、`FOREGROUND_SERVICE` + `FOREGROUND_SERVICE_DATA_SYNC`（常驻）、`POST_NOTIFICATIONS`。
 没有发短信、通讯录、通话记录、位置权限。`allowBackup=false`，密钥不进云备份。
 
 ## 测试
@@ -70,7 +72,8 @@ app/src/main/java/io/github/survivorno1/smsbridge/
   MainActivity.kt   界面：开关 / 地址 / 密钥 / 本机自检
   BridgeService.kt  前台服务，托管 HttpServer
   HttpServer.kt     HTTP 解析、签名校验、路由、健康页、错误 JSON
-  SmsSource.kt      短信来源接口 + InboxSource（content://sms/inbox）
+  SmsSource.kt      短信来源接口 + InboxSource（content://sms/inbox）+ MergedSource（两路合并去重）
+  Capture.kt        广播通道：SmsReceiver + 24 小时私有缓存
   Crypto.kt         HMAC 签名、AES-GCM 加解密（纯 JVM）
   Prefs.kt          密钥 / 端口
 ```

@@ -82,3 +82,30 @@ class InboxSource(private val cr: ContentResolver) : SmsSource {
         return out
     }
 }
+
+/**
+ * 双通道：收件箱 ∪ 广播缓存，按（发件人+正文）去重——同一条短信在两路里的时间戳可能差几秒
+ * （收件箱记的是入库时间，广播里是短信中心时间），所以去重不看时间。
+ */
+class MergedSource(private val inbox: SmsSource) : SmsSource {
+    override fun range(from: Long, to: Long, limit: Int): List<Msg> =
+        merge(inbox.range(from, to, limit), Capture.all().filter { it.ts in from..to }, limit)
+
+    override fun search(q: String, regex: Boolean, since: Long, limit: Int): List<Msg> {
+        val re = if (regex) Regex(q, RegexOption.IGNORE_CASE) else null
+        val captured = Capture.all().filter { m ->
+            m.ts >= since && (
+                if (re != null) re.containsMatchIn(m.body) || re.containsMatchIn(m.from)
+                else m.body.contains(q, true) || m.from.contains(q, true)
+            )
+        }
+        return merge(inbox.search(q, regex, since, limit), captured, limit)
+    }
+
+    private fun merge(a: List<Msg>, b: List<Msg>, limit: Int): List<Msg> {
+        val seen = HashSet<String>()
+        return (a + b).sortedByDescending { it.ts }
+            .filter { seen.add(it.from + "\u0000" + it.body) }
+            .take(limit)
+    }
+}
