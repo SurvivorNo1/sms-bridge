@@ -10,8 +10,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.net.HttpURLConnection
-import java.net.URL
+import java.net.Socket
 import java.net.URLEncoder
 
 /**
@@ -47,11 +46,27 @@ class InboxE2ETest {
             Thread.sleep(200)
             val target = "/sms/search?q=${URLEncoder.encode("verification code", "UTF-8")}&minutes=1440"
             val ts = System.currentTimeMillis()
-            val c = URL("http://127.0.0.1:$port$target").openConnection() as HttpURLConnection
-            c.setRequestProperty("X-Timestamp", ts.toString())
-            c.setRequestProperty("X-Sign", Crypto.sign(secret, ts, "GET", target))
-            assertEquals(200, c.responseCode)
-            val json = Crypto.decrypt(secret, c.inputStream.readBytes().toString(Charsets.UTF_8))
+            // 用裸 socket 发请求：Android 对测试进程的 HttpURLConnection 默认禁明文 HTTP
+            val raw = Socket("127.0.0.1", port).use { sock ->
+                sock.getOutputStream().write(
+                    ("GET $target HTTP/1.1
+Host: 127.0.0.1
+" +
+                        "X-Timestamp: $ts
+X-Sign: ${Crypto.sign(secret, ts, "GET", target)}
+" +
+                        "Connection: close
+
+").toByteArray()
+                )
+                sock.getOutputStream().flush()
+                sock.getInputStream().readBytes().toString(Charsets.UTF_8)
+            }
+            assertTrue(raw, raw.startsWith("HTTP/1.1 200"))
+            val body = raw.substringAfter("
+
+")
+            val json = Crypto.decrypt(secret, body)
             assertTrue(json, json.contains("482913"))
         } finally {
             server.stop()
