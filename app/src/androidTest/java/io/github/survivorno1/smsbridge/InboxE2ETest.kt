@@ -5,7 +5,6 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.GrantPermissionRule
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -47,25 +46,19 @@ class InboxE2ETest {
             val target = "/sms/search?q=${URLEncoder.encode("verification code", "UTF-8")}&minutes=1440"
             val ts = System.currentTimeMillis()
             // 用裸 socket 发请求：Android 对测试进程的 HttpURLConnection 默认禁明文 HTTP
+            val crlf = "\r\n"
             val raw = Socket("127.0.0.1", port).use { sock ->
-                sock.getOutputStream().write(
-                    ("GET $target HTTP/1.1
-Host: 127.0.0.1
-" +
-                        "X-Timestamp: $ts
-X-Sign: ${Crypto.sign(secret, ts, "GET", target)}
-" +
-                        "Connection: close
-
-").toByteArray()
-                )
+                val req = "GET $target HTTP/1.1" + crlf +
+                    "Host: 127.0.0.1" + crlf +
+                    "X-Timestamp: $ts" + crlf +
+                    "X-Sign: " + Crypto.sign(secret, ts, "GET", target) + crlf +
+                    "Connection: close" + crlf + crlf
+                sock.getOutputStream().write(req.toByteArray())
                 sock.getOutputStream().flush()
                 sock.getInputStream().readBytes().toString(Charsets.UTF_8)
             }
             assertTrue(raw, raw.startsWith("HTTP/1.1 200"))
-            val body = raw.substringAfter("
-
-")
+            val body = raw.substringAfter(crlf + crlf)
             val json = Crypto.decrypt(secret, body)
             assertTrue(json, json.contains("482913"))
         } finally {
