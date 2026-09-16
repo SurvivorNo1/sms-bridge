@@ -139,13 +139,24 @@
                 android:textSize="13sp" />
         </LinearLayout>
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:lineSpacingExtra="3dp"
-            android:text="接口：/sms/range（时间范围）、/sms/search（关键词 / 正则）。每个请求须带 HMAC 签名，响应 AES-GCM 加密。不联网上传、不发短信、不读通讯录、无第三方依赖。"
-            android:textColor="@color/text2"
-            android:textSize="12sp" />
+        <!-- 关于 / 声明 -->
+        <LinearLayout style="@style/Card">
+            <TextView style="@style/CardTitle" android:text="关于" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:lineSpacingExtra="3dp"
+                android:text="@string/about"
+                android:textColor="@color/text"
+                android:textSize="13sp" />
+            <TextView
+                android:id="@+id/tvVersion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:textIsSelectable="true"
+                android:textColor="@color/text2"
+                android:textSize="12sp" />
+        </LinearLayout>
     </LinearLayout>
 </ScrollView>

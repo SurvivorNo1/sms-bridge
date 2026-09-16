@@ -47,6 +47,8 @@ class MainActivity : Activity() {
         tvSecret = findViewById(R.id.tvSecret)
         tvAddr = findViewById(R.id.tvAddr)
         tvTest = findViewById(R.id.tvTest)
+        findViewById<TextView>(R.id.tvVersion).text =
+            "v${Doc.VERSION} · MIT · 源码 github.com/SurvivorNo1/sms-bridge"
 
         sw.setOnCheckedChangeListener { _, on ->
             if (syncing) return@setOnCheckedChangeListener

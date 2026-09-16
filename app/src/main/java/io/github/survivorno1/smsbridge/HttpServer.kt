@@ -226,7 +226,7 @@ object Json {
 }
 
 object Doc {
-    const val VERSION = "0.2.0"
+    const val VERSION = "0.2.1"
     val SIGNED = setOf("/ping", "/sms/range", "/sms/search")
 
     fun html(port: Int): String = """<!doctype html><html lang="zh"><head><meta charset="utf-8">
@@ -264,6 +264,7 @@ req = urllib.request.Request(f"http://{HOST}{target}", headers={"X-Timestamp": s
 raw = base64.b64decode(urllib.request.urlopen(req).read())
 key = hashlib.sha256(SECRET.encode()).digest()
 print(json.loads(AES.new(key, AES.MODE_GCM, nonce=raw[:12]).decrypt_and_verify(raw[12:-16], raw[-16:])))</pre>
-<p style="color:#6b7280;font-size:13px">只接受同一 WiFi / 热点内私网地址的连接；不联网上传、不发短信、不读通讯录。源码：github.com/SurvivorNo1/sms-bridge</p>
+<h2>声明</h2>
+<p style="color:#6b7280;font-size:13px">这是作者 2026 年秋招找工作期间写的个人工具，用途只有一个：让电脑上的脚本 / AI agent 能在自己的局域网内、凭自己设置的密钥，读取自己手机上的短信验证码。只接受同一 WiFi / 热点内私网地址的连接；不联网上传、不发短信、不读通讯录、无第三方依赖。请只装在你自己的手机上。源码（MIT）：github.com/SurvivorNo1/sms-bridge</p>
 </body></html>"""
 }
