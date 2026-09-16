@@ -11,8 +11,9 @@ android {
         applicationId = "io.github.survivorno1.smsbridge"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "0.2.0"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     // 固定签名用的 keystore 提交在仓库里（只是为了每次 CI 出的包签名一致、能覆盖安装，
@@ -43,5 +44,11 @@ android {
     }
 }
 
-// 零第三方依赖：只用 Android SDK 自带的 API
-dependencies {}
+// 正式包零第三方依赖，只用 Android SDK 自带的 API；下面全是测试用，不进 APK
+dependencies {
+    testImplementation("junit:junit:4.13.2")
+    androidTestImplementation("androidx.test:core:1.6.1")
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.test:rules:1.6.1")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+}

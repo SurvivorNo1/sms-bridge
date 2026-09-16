@@ -1,79 +1,151 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="20dp">
-
-        <Switch
-            android:id="@+id/sw"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="局域网查询服务"
-            android:textSize="18sp" />
+        android:paddingStart="18dp"
+        android:paddingEnd="18dp"
+        android:paddingTop="28dp"
+        android:paddingBottom="28dp">
 
         <TextView
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:text="地址"
+            android:text="SMS Bridge"
+            android:textColor="@color/text"
+            android:textSize="28sp"
             android:textStyle="bold" />
         <TextView
-            android:id="@+id/tvAddr"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textIsSelectable="true"
-            android:typeface="monospace" />
+            android:layout_marginBottom="20dp"
+            android:text="让电脑在局域网里凭密钥查本机短信"
+            android:textColor="@color/text2"
+            android:textSize="14sp" />
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:text="密钥（电脑端 SMS_SECRET）"
-            android:textStyle="bold" />
-        <TextView
-            android:id="@+id/tvSecret"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textIsSelectable="true"
-            android:typeface="monospace" />
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-            <Button
-                android:id="@+id/btnCopy"
-                android:layout_width="0dp"
-                android:layout_weight="1"
+        <!-- 服务开关 -->
+        <LinearLayout style="@style/Card">
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="复制" />
-            <Button
-                android:id="@+id/btnRegen"
-                android:layout_width="0dp"
-                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+                <View
+                    android:id="@+id/dot"
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:layout_marginEnd="10dp"
+                    android:background="@drawable/dot" />
+                <TextView
+                    android:id="@+id/tvStatus"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="已停止"
+                    android:textColor="@color/text"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+                <Switch
+                    android:id="@+id/sw"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+            <TextView
+                android:id="@+id/tvHint"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="换新密钥" />
+                android:layout_marginTop="8dp"
+                android:text="开着时通知栏常驻；只对同一 WiFi / 热点内、持有密钥的设备开放。"
+                android:textColor="@color/text2"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <!-- 地址 -->
+        <LinearLayout style="@style/Card">
+            <TextView style="@style/CardTitle" android:text="查询地址" />
+            <TextView
+                android:id="@+id/tvAddr"
+                style="@style/Mono"
+                android:text="—" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="电脑浏览器打开该地址即可看到健康页与接口说明（不含短信）。"
+                android:textColor="@color/text2"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- 密钥 -->
+        <LinearLayout style="@style/Card">
+            <TextView style="@style/CardTitle" android:text="密钥  ·  电脑端 SMS_SECRET" />
+            <TextView
+                android:id="@+id/tvSecret"
+                style="@style/Mono"
+                android:text="—" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:gravity="end"
+                android:orientation="horizontal">
+                <Button
+                    android:id="@+id/btnRegen"
+                    style="@style/TextBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="换新密钥" />
+                <Button
+                    android:id="@+id/btnCopy"
+                    style="@style/TextBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="复制" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 本机自检 -->
+        <LinearLayout style="@style/Card">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+                <TextView
+                    style="@style/CardTitle"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_marginBottom="0dp"
+                    android:text="本机自检  ·  最近 30 分钟" />
+                <Button
+                    android:id="@+id/btnTest"
+                    style="@style/TextBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="查一下" />
+            </LinearLayout>
+            <TextView
+                android:id="@+id/tvTest"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="点「查一下」确认本机短信读取权限正常。结果只显示在这里，不发出去。"
+                android:textColor="@color/text2"
+                android:textSize="13sp" />
         </LinearLayout>
 
         <TextView
-            android:id="@+id/tvCount"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp" />
-        <Button
-            android:id="@+id/btnClear"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="清空缓存" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:textSize="12sp"
-            android:text="只做一件事：开关打开期间收到的短信放进 24 小时缓存，电脑在同一 WiFi/热点内带密钥签名查询。不读历史收件箱，不联网上传，不发短信。" />
+            android:layout_marginTop="6dp"
+            android:lineSpacingExtra="3dp"
+            android:text="接口：/sms/range（时间范围）、/sms/search（关键词 / 正则）。每个请求须带 HMAC 签名，响应 AES-GCM 加密。不联网上传、不发短信、不读通讯录、无第三方依赖。"
+            android:textColor="@color/text2"
+            android:textSize="12sp" />
     </LinearLayout>
 </ScrollView>

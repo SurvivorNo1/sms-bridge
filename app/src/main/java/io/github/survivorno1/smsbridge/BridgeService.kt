@@ -11,10 +11,11 @@ import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 
-/** 前台服务：常驻通知栏，开着就监听端口；关掉就停端口并清空缓存。 */
+/** 前台服务：常驻通知栏，开着就在局域网监听端口；关掉端口即关闭。 */
 class BridgeService : Service() {
     companion object {
         @Volatile var running = false
+        @Volatile var lastError: String? = null
         private const val CHANNEL = "bridge"
         private const val NOTIF_ID = 1
 
@@ -26,11 +27,9 @@ class BridgeService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        val nm = getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(
+        getSystemService(NotificationManager::class.java).createNotificationChannel(
             NotificationChannel(CHANNEL, "SMS Bridge", NotificationManager.IMPORTANCE_LOW)
         )
-        Store.init(this)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -40,8 +39,8 @@ class BridgeService : Service() {
         )
         val n = Notification.Builder(this, CHANNEL)
             .setContentTitle("SMS Bridge 运行中")
-            .setContentText("局域网 :$port 监听中，进 app 关开关即停止")
-            .setSmallIcon(R.drawable.ic_launcher)
+            .setContentText("局域网 :$port 可查询，进 app 关闭")
+            .setSmallIcon(R.drawable.ic_stat)
             .setContentIntent(open)
             .setOngoing(true)
             .build()
@@ -53,10 +52,13 @@ class BridgeService : Service() {
 
         if (http == null) {
             try {
-                http = HttpServer(port) { Prefs.secret(this) }.also { it.start() }
+                http = HttpServer(port, { Prefs.secret(this) }, InboxSource(contentResolver))
+                    .also { it.start() }
                 running = true
+                lastError = null
             } catch (e: Exception) {
                 running = false
+                lastError = "端口 $port 打不开：${e.message}"
                 stopSelf()
             }
         }
@@ -67,7 +69,6 @@ class BridgeService : Service() {
         running = false
         http?.stop()
         http = null
-        Store.clear()
         super.onDestroy()
     }
 

@@ -1,8 +1,8 @@
 package io.github.survivorno1.smsbridge
 
 import android.content.Context
-import android.util.Base64
 import java.security.SecureRandom
+import java.util.Base64
 
 /** 密钥与端口。存在 app 私有目录的 SharedPreferences 里，allowBackup=false 所以不会被云备份带走。 */
 object Prefs {
@@ -11,11 +11,7 @@ object Prefs {
 
     private fun sp(c: Context) = c.getSharedPreferences(FILE, Context.MODE_PRIVATE)
 
-    fun secret(c: Context): String {
-        val cur = sp(c).getString("secret", null)
-        if (cur != null) return cur
-        return regenerate(c)
-    }
+    fun secret(c: Context): String = sp(c).getString("secret", null) ?: regenerate(c)
 
     fun regenerate(c: Context): String {
         val s = newSecret()
@@ -26,9 +22,9 @@ object Prefs {
     fun port(c: Context): Int = sp(c).getInt("port", DEFAULT_PORT)
 
     /** 24 字节随机 → 32 位 URL-safe base64，无填充 */
-    private fun newSecret(): String {
+    fun newSecret(): String {
         val b = ByteArray(24)
         SecureRandom().nextBytes(b)
-        return Base64.encodeToString(b, Base64.NO_WRAP or Base64.URL_SAFE or Base64.NO_PADDING)
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(b)
     }
 }
