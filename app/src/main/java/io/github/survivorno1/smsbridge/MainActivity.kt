@@ -119,7 +119,7 @@ class MainActivity : Activity() {
         if (!hasSmsPermission()) { requestPerms(); return }
         val now = System.currentTimeMillis()
         val list = try {
-            InboxSource(contentResolver).range(now - 24 * 3600_000, now, 5)
+            MergedSource(InboxSource(contentResolver)).range(now - 24 * 3600_000, now, 5)
         } catch (e: Exception) {
             tvTest.text = "读取失败：${e.message}"
             tvTest.setTextColor(getColor(R.color.warn))
