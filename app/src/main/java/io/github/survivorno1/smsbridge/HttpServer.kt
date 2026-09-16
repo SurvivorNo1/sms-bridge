@@ -95,7 +95,7 @@ class HttpServer(private val port: Int, private val secret: () -> String) {
         respond(s, 200, Crypto.encrypt(secret(), json))
     }
 
-    /** 对端是私网地址，且本端地址挂在 WiFi(wlan*) 或热点(ap*/swlan*) 网卡上 */
+    /** 对端是私网地址，且本端地址挂在 WiFi(wlan) 或热点(ap / swlan) 网卡上 */
     private fun fromLan(s: Socket): Boolean {
         val remote = s.inetAddress ?: return false
         if (remote !is Inet4Address || !remote.isSiteLocalAddress) return false
