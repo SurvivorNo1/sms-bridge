@@ -118,7 +118,7 @@ class MainActivity : Activity() {
         if (!hasSmsPermission()) { requestPerms(); return }
         val now = System.currentTimeMillis()
         val list = try {
-            InboxSource(contentResolver).range(now - 30 * 60_000, now, 5)
+            InboxSource(contentResolver).range(now - 24 * 3600_000, now, 5)
         } catch (e: Exception) {
             tvTest.text = "读取失败：${e.message}"
             tvTest.setTextColor(getColor(R.color.warn))
@@ -126,13 +126,12 @@ class MainActivity : Activity() {
         }
         tvTest.setTextColor(getColor(R.color.text))
         if (list.isEmpty()) {
-            tvTest.text = "权限正常，最近 30 分钟没有短信。"
+            tvTest.text = "权限正常，最近 24 小时没有短信。"
             return
         }
-        val fmt = SimpleDateFormat("HH:mm", Locale.getDefault())
         tvTest.text = list.joinToString("\n") {
             val body = it.body.replace('\n', ' ')
-            "${fmt.format(Date(it.ts))}  ${it.from}  ${if (body.length > 28) body.take(28) + "…" else body}"
+            "${dfmt.format(Date(it.ts))}  ${it.from}  ${if (body.length > 24) body.take(24) + "…" else body}"
         }
     }
 

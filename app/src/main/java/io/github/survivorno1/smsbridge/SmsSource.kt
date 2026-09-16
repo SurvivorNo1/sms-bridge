@@ -13,6 +13,9 @@ interface SmsSource {
     /** since 之后、正文或发件人含关键词（或匹配正则）的短信，新的在前 */
     fun search(q: String, regex: Boolean, since: Long, limit: Int = MAX_ROWS): List<Msg>
 
+    /** 调试：整个 content://sms（不限收件箱）里发件人含 q 的行，带 type/read/seen 原始字段 */
+    fun raw(q: String, since: Long, limit: Int = 50): List<Map<String, Any?>> = emptyList()
+
     companion object { const val MAX_ROWS = 200 }
 }
 
@@ -39,6 +42,28 @@ class InboxSource(private val cr: ContentResolver) : SmsSource {
             "${Telephony.Sms.DATE} >= ? AND (${Telephony.Sms.BODY} LIKE ? ESCAPE '\\' OR ${Telephony.Sms.ADDRESS} LIKE ? ESCAPE '\\')",
             arrayOf(since.toString(), like, like), limit
         )
+    }
+
+    override fun raw(q: String, since: Long, limit: Int): List<Map<String, Any?>> {
+        val out = ArrayList<Map<String, Any?>>()
+        val like = "%" + q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+        cr.query(
+            Telephony.Sms.CONTENT_URI,
+            arrayOf("_id", "thread_id", "type", "read", "seen", "date", "date_sent", "address", "body"),
+            "${Telephony.Sms.DATE} >= ? AND ${Telephony.Sms.ADDRESS} LIKE ? ESCAPE '\\'",
+            arrayOf(since.toString(), like), "${Telephony.Sms.DATE} DESC LIMIT $limit"
+        )?.use { c ->
+            while (c.moveToNext()) {
+                val row = LinkedHashMap<String, Any?>()
+                for (i in 0 until c.columnCount) row[c.getColumnName(i)] = when (c.getType(i)) {
+                    android.database.Cursor.FIELD_TYPE_INTEGER -> c.getLong(i)
+                    android.database.Cursor.FIELD_TYPE_NULL -> null
+                    else -> c.getString(i)
+                }
+                out.add(row)
+            }
+        }
+        return out
     }
 
     private fun query(sel: String, args: Array<String>, limit: Int): List<Msg> {

@@ -138,6 +138,18 @@ class HttpServer(
                 }
                 Json.items(items)
             }
+            "/sms/raw" -> {
+                val kw = q["q"] ?: run { error(s, 400, "missing_q", "缺少参数 q（发件号码片段）"); return }
+                val minutes = q["minutes"]?.toLongOrNull() ?: 1440L
+                val rows = try { source.raw(kw, now - minutes * 60_000) } catch (e: SecurityException) {
+                    error(s, 500, "no_sms_permission", "手机未授予「读取短信」权限"); return
+                }
+                rows.joinToString(",", "{\"ok\":true,\"count\":${rows.size},\"rows\":[", "]}") { row ->
+                    row.entries.joinToString(",", "{", "}") { (k, v) ->
+                        Json.str(k) + ":" + when (v) { null -> "null"; is Long -> v.toString(); else -> Json.str(v.toString()) }
+                    }
+                }
+            }
             else -> { error(s, 404, "not_found", "没有这个接口"); return }
         }
         respond(s, 200, "text/plain; charset=utf-8", Crypto.encrypt(secret(), json))
@@ -226,8 +238,8 @@ object Json {
 }
 
 object Doc {
-    const val VERSION = "0.2.1"
-    val SIGNED = setOf("/ping", "/sms/range", "/sms/search")
+    const val VERSION = "0.2.2"
+    val SIGNED = setOf("/ping", "/sms/range", "/sms/search", "/sms/raw")
 
     fun html(port: Int): String = """<!doctype html><html lang="zh"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>SMS Bridge</title>
@@ -244,6 +256,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:6px 8px;text-align:left;vertical-a
 <tr><td><code>/ping</code></td><td>—</td><td>验证签名是否正确，返回手机当前时间</td></tr>
 <tr><td><code>/sms/range</code></td><td><code>minutes=30</code> 或 <code>from=&lt;ms&gt;&amp;to=&lt;ms&gt;</code></td><td>时间范围内的短信，新的在前，最多 200 条</td></tr>
 <tr><td><code>/sms/search</code></td><td><code>q=关键词</code>，<code>minutes=30</code>，<code>re=1</code> 按正则</td><td>正文或发件人匹配的短信</td></tr>
+<tr><td><code>/sms/raw</code></td><td><code>q=发件号码片段</code>，<code>minutes=1440</code></td><td>调试：查整个 content://sms（不限收件箱），返回 type/read/seen/date 原始字段</td></tr>
 </table>
 <h2>签名</h2>
 <pre>X-Timestamp: &lt;毫秒 Unix 时间戳&gt;         # 与手机相差不能超过 5 分钟
