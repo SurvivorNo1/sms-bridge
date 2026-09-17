@@ -13,7 +13,7 @@ interface SmsSource {
     /** since 之后、正文或发件人含关键词（或匹配正则）的短信，新的在前 */
     fun search(q: String, regex: Boolean, since: Long, limit: Int = MAX_ROWS): List<Msg>
 
-    /** 调试：整个 content://sms（不限收件箱）里发件人含 q 的行，带 type/read/seen 原始字段 */
+    /** 调试：整个 content://sms（不限收件箱、不限时间）里发件人或正文含 q 的行，带 type/read/seen/date 原始字段 */
     fun raw(q: String, since: Long, limit: Int = 50): List<Map<String, Any?>> = emptyList()
 
     companion object { const val MAX_ROWS = 200 }
@@ -50,8 +50,8 @@ class InboxSource(private val cr: ContentResolver) : SmsSource {
         cr.query(
             Telephony.Sms.CONTENT_URI,
             arrayOf("_id", "thread_id", "type", "read", "seen", "date", "date_sent", "address", "body"),
-            "${Telephony.Sms.DATE} >= ? AND ${Telephony.Sms.ADDRESS} LIKE ? ESCAPE '\\'",
-            arrayOf(since.toString(), like), "${Telephony.Sms.DATE} DESC LIMIT $limit"
+            "${Telephony.Sms.DATE} >= ? AND (${Telephony.Sms.ADDRESS} LIKE ? ESCAPE '\\' OR ${Telephony.Sms.BODY} LIKE ? ESCAPE '\\')",
+            arrayOf(since.toString(), like, like), "${Telephony.Sms.DATE} DESC LIMIT $limit"
         )?.use { c ->
             while (c.moveToNext()) {
                 val row = LinkedHashMap<String, Any?>()

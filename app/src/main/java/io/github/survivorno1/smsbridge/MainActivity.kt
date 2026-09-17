@@ -130,10 +130,11 @@ class MainActivity : Activity() {
             tvTest.text = "权限正常，最近 24 小时没有短信。"
             return
         }
+        val fmt = SimpleDateFormat("MM-dd HH:mm", Locale.getDefault())
         tvTest.text = list.joinToString("\n") {
             val body = it.body.replace('\n', ' ')
-            "${dfmt.format(Date(it.ts))}  ${it.from}  ${if (body.length > 24) body.take(24) + "…" else body}"
-        }
+            "${fmt.format(Date(it.ts))}  ${it.from}  ${if (body.length > 24) body.take(24) + "…" else body}"
+        } + "\n（广播通道缓存 ${Capture.size()} 条）"
     }
 
     private fun hasSmsPermission() =

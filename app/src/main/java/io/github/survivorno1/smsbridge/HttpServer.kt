@@ -118,9 +118,10 @@ class HttpServer(
         val json = when (path) {
             "/ping" -> """{"ok":true,"now":$now}"""
             "/sms/range" -> {
-                val to = q["to"]?.toLongOrNull() ?: now
+                // to 未指定时放宽到 now+12h：有的 ROM 把 date 写成短信中心时间，可能"在未来"
+                val to = q["to"]?.toLongOrNull() ?: (now + 12 * 3600_000L)
                 val from = q["from"]?.toLongOrNull()
-                    ?: (to - (q["minutes"]?.toLongOrNull() ?: 30L) * 60_000)
+                    ?: (now - (q["minutes"]?.toLongOrNull() ?: 30L) * 60_000)
                 if (from > to) { error(s, 400, "bad_range", "from 必须 <= to（毫秒时间戳）"); return }
                 val items = try { source.range(from, to) } catch (e: SecurityException) {
                     error(s, 500, "no_sms_permission", "手机未授予「读取短信」权限，请在 app 或系统设置里开启"); return
@@ -140,8 +141,8 @@ class HttpServer(
             }
             "/sms/raw" -> {
                 val kw = q["q"] ?: run { error(s, 400, "missing_q", "缺少参数 q（发件号码片段）"); return }
-                val minutes = q["minutes"]?.toLongOrNull() ?: 1440L
-                val rows = try { source.raw(kw, now - minutes * 60_000) } catch (e: SecurityException) {
+                val minutes = q["minutes"]?.toLongOrNull() ?: 0L   // 0 = 不限时间
+                val rows = try { source.raw(kw, if (minutes > 0) now - minutes * 60_000 else 0L) } catch (e: SecurityException) {
                     error(s, 500, "no_sms_permission", "手机未授予「读取短信」权限"); return
                 }
                 rows.joinToString(",", "{\"ok\":true,\"count\":${rows.size},\"rows\":[", "]}") { row ->
@@ -238,7 +239,7 @@ object Json {
 }
 
 object Doc {
-    const val VERSION = "0.2.2"
+    const val VERSION = "0.3.0"
     val SIGNED = setOf("/ping", "/sms/range", "/sms/search", "/sms/raw")
 
     fun html(port: Int): String = """<!doctype html><html lang="zh"><head><meta charset="utf-8">
