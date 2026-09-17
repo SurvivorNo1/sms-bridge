@@ -239,7 +239,7 @@ object Json {
 }
 
 object Doc {
-    const val VERSION = "0.3.0"
+    const val VERSION = "0.3.1"
     val SIGNED = setOf("/ping", "/sms/range", "/sms/search", "/sms/raw")
 
     fun html(port: Int): String = """<!doctype html><html lang="zh"><head><meta charset="utf-8">

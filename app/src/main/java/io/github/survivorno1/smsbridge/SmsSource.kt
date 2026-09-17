@@ -88,6 +88,14 @@ class InboxSource(private val cr: ContentResolver) : SmsSource {
  * （收件箱记的是入库时间，广播里是短信中心时间），所以去重不看时间。
  */
 class MergedSource(private val inbox: SmsSource) : SmsSource {
+    /** 调试接口直通收件箱库；广播缓存另加 channel=capture 标记一并返回 */
+    override fun raw(q: String, since: Long, limit: Int): List<Map<String, Any?>> {
+        val db = inbox.raw(q, since, limit).map { LinkedHashMap(it).apply { put("channel", "db") } }
+        val cap = Capture.all().filter { it.ts >= since && (it.from.contains(q, true) || it.body.contains(q, true)) }
+            .map { linkedMapOf<String, Any?>("channel" to "capture", "date" to it.ts, "address" to it.from, "body" to it.body) }
+        return (db + cap).take(limit)
+    }
+
     override fun range(from: Long, to: Long, limit: Int): List<Msg> =
         merge(inbox.range(from, to, limit), Capture.all().filter { it.ts in from..to }, limit)
 
